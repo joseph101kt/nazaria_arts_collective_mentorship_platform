@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/demo/pm/page.jsx", "app/demo/associate/page.jsx", "app/demo/pm/page.jsx", "components/ui/chat.jsx", "components/ui/shared.jsx", "components/ui/programpages.jsx"  ],
   "exclude": ["node_modules"]
 }

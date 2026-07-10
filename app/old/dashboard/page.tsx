@@ -41,9 +41,9 @@
 
 import { redirect } from "next/navigation";
 
-import { requireUserRecord } from "@/lib/auth/guards";
-import { getDashboardRoute } from "@/lib/auth/redirects";
-import { UserRole } from "@/lib/auth/roles";
+import { requireUserRecord } from "@/lib/old/auth/guards";
+import { getDashboardRoute } from "@/lib/old/auth/redirects";
+import { UserRole } from "@/lib/old/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
