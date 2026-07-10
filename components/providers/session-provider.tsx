@@ -1,3 +1,4 @@
+// components/providers/session-provider.tsx
 "use client";
 
 import { useEffect, useMemo } from "react";
@@ -27,9 +28,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       if (!active) return;
 
       if (userErr || !userRow) {
-        // Auth session exists but no matching `users` row — e.g. a signup
-        // trigger hasn't landed yet, or the row was deleted. Treat as
-        // logged out rather than crash the app on a null role.
+        // Auth session exists but no matching `users` row — e.g. the
+        // handle_new_user trigger on auth.users is missing/broken, or
+        // hasn't landed yet. Log loudly: this used to fail silently and
+        // looked identical to "logged out" from the UI's perspective,
+        // which made the role-selection bug very hard to track down.
+        console.error(
+          "[SessionProvider] auth user exists but public.users row not found:",
+          authUserId,
+          userErr?.message
+        );
         clear();
         return;
       }

@@ -1,8 +1,12 @@
+// components/auth/signup-form.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signUp } from "@/lib/api/auth";
+import { routeForSession } from "@/lib/api/session-routing";
+import { createClient } from "@/lib/supabase/client";
 import { getPasswordStrength, passwordsMatch } from "@/lib/validations/password";
 import { PasswordStrengthMeter } from "./password-strength-meter";
 import { VerifyEmailCard } from "./verify-email-card";
@@ -11,6 +15,7 @@ const inputClass =
   "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 export function SignupForm() {
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +39,30 @@ export function SignupForm() {
 
     setSubmitting(true);
     try {
-      await signUp({ fullName: fullName.trim(), email: email.trim(), password });
+      const data = await signUp({ fullName: fullName.trim(), email: email.trim(), password });
+
+      // TODO(prod): re-enable "Confirm email" in Supabase dashboard
+      // (Authentication -> Providers -> Email) before shipping, and wire
+      // up Resend as the SMTP provider so we're not on Supabase's shared
+      // rate limit. While confirmation is OFF, signUp() returns an active
+      // session immediately and this branch fires. Once it's back ON,
+      // data.session will be null here and we fall through to the
+      // verify-email card + app/auth/callback/route.ts flow as before.
+      if (data.session && data.user) {
+        const supabase = createClient();
+        const [{ data: userRow }, { data: profileRow }] = await Promise.all([
+          supabase.from("users").select("role, approval_status").eq("id", data.user.id).single(),
+          supabase.from("profiles").select("id").eq("user_id", data.user.id).maybeSingle(),
+        ]);
+
+        const destination = routeForSession(
+          userRow ? { ...userRow, hasProfile: !!profileRow } : null,
+        );
+        router.replace(destination);
+        router.refresh();
+        return;
+      }
+
       setSubmittedEmail(email.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
@@ -123,7 +151,7 @@ export function SignupForm() {
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-text-accent hover:underline">
+        <Link href="/auth/login" className="font-medium text-text-accent hover:underline">
           Log in
         </Link>
       </p>

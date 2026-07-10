@@ -1,3 +1,4 @@
+// lib/permissions.ts
 import type { UserRole } from "@/lib/types";
 
 export type PermissionLevel = "mentee" | "mentor" | "staff";

@@ -1,3 +1,4 @@
+// app/onboarding/role/page.tsx
 import { RoleChoice } from "@/components/onboarding/role-choice";
 
 export default function OnboardingPage() {

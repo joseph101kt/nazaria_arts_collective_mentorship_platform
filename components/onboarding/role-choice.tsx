@@ -1,3 +1,4 @@
+// components/onboarding/role-choice.tsx
 "use client";
 
 import { useState } from "react";
@@ -11,23 +12,36 @@ import type { UserRole } from "@/lib/types";
 export function RoleChoice() {
   const router = useRouter();
   const user = useSessionStore((s) => s.user);
+  const loading = useSessionStore((s) => s.loading);
   const [selected, setSelected] = useState<UserRole | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleContinue() {
-    console.log("handle contnue clicked")
-    console.log({
-      selected,
-      user,
-    });
-    if (!selected || !user) return;
-    console.log("did not return early")
+    if (!selected) return;
+
+    if (!user) {
+      setError(
+        "We couldn't find your session yet. Wait a moment and try again, or refresh the page."
+      );
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     try {
+      // 1. Save the role. 
+      // Note: If your backend or Supabase trigger automatically defaults 
+      // approval_status to 'pending' when role === 'mentor', this is all you need.
+      // If not, you might need to update setUserRole to accept an object or update the column explicitly.
       await setUserRole(user.id, selected);
-      router.push("/onboarding/profile");
+      
+      // 2. Conditional Redirect routing logic
+      if (selected === "mentor") {
+        router.push("/onboarding/not-approved");
+      } else {
+        router.push("/onboarding/profile");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save that. Try again.");
       setSubmitting(false);
@@ -48,7 +62,6 @@ export function RoleChoice() {
           description="Join a cohort, get assignments, and track your progress."
           active={selected === "mentee"}
           onClick={() => setSelected("mentee")}
-          
         />
         <RoleCard
           icon={<Users className="h-5 w-5" />}
@@ -63,11 +76,11 @@ export function RoleChoice() {
 
       <button
         type="button"
-        disabled={!selected || submitting}
+        disabled={!selected || submitting || loading}
         onClick={handleContinue}
         className="mt-6 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {submitting ? "Saving…" : "Continue"}
+        {loading ? "Loading your session…" : submitting ? "Saving…" : "Continue"}
       </button>
     </div>
   );

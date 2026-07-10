@@ -1,3 +1,4 @@
+// components/providers/approval-gate.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -5,8 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSessionStore } from "@/store/session-store";
 
 // Routes that must never be redirect-guarded, or you get an infinite loop
-// (e.g. /pending-approval redirecting to itself).
-const PUBLIC_PATHS = ["/login", "/pending-approval", "/not-approved"];
+// (e.g. /pending-approval redirecting to itself). NOTE: login lives at
+// /auth/login, not /login — this was silently wrong before and caused a
+// 404 on every failed-auth redirect.
+const PUBLIC_PATHS = ["/auth/login", "/auth/signup", "/pending-approval", "/not-approved"];
 
 export function ApprovalGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -19,14 +22,22 @@ export function ApprovalGate({ children }: { children: React.ReactNode }) {
   const approvalStatus = useSessionStore((s) => s.approvalStatus);
   const loading = useSessionStore((s) => s.loading);
 
+  const isPublic = PUBLIC_PATHS.includes(pathname);
+  const isOnboarding = pathname.startsWith("/onboarding");
+
   useEffect(() => {
     if (loading) return;
-    if (PUBLIC_PATHS.includes(pathname)) return;
+    if (isPublic) return;
 
     if (!user) {
-      router.replace("/login");
+      router.replace("/auth/login");
       return;
     }
+
+    // Treat onboarding like public, but it needs a user.
+    // Skip the approval status checks so mentors aren't booted mid-onboarding.
+    if (isOnboarding) return;
+
     if (approvalStatus === "pending") {
       router.replace("/pending-approval");
       return;
@@ -35,7 +46,7 @@ export function ApprovalGate({ children }: { children: React.ReactNode }) {
       router.replace("/not-approved");
       return;
     }
-  }, [loading, user, approvalStatus, pathname, router]);
+  }, [loading, user, approvalStatus, pathname, router, isPublic, isOnboarding]);
 
   // SessionProvider already renders a spinner while loading — don't
   // double-render one here.
@@ -44,7 +55,8 @@ export function ApprovalGate({ children }: { children: React.ReactNode }) {
   // Briefly render nothing rather than flashing protected content while
   // the redirect effect above fires.
   const blocked =
-    !PUBLIC_PATHS.includes(pathname) && (!user || approvalStatus !== "approved");
+    !isPublic && (!user || (!isOnboarding && approvalStatus !== "approved"));
+
   if (blocked) return null;
 
   return <>{children}</>;

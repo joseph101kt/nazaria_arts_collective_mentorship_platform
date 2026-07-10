@@ -1,3 +1,4 @@
+// components/auth/password-strength-meter.tsx
 "use client";
 
 import { Check, X } from "lucide-react";

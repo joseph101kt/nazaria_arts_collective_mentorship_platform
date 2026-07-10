@@ -1,3 +1,4 @@
+// lib/validations/password.ts
 /**
  * Password policy — mirrors the Supabase Auth dashboard setting
  * (Authentication → Policies → Password requirements).

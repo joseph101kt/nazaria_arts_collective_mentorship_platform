@@ -1,3 +1,4 @@
+// components/auth/verify-email-card.tsx
 import { Mail } from "lucide-react";
 
 interface VerifyEmailCardProps {

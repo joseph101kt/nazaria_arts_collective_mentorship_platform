@@ -1,3 +1,4 @@
+// lib/api/auth.ts
 import { createClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/lib/types";
 

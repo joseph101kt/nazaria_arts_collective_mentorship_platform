@@ -1,3 +1,4 @@
+// store/session-store.ts
 import { create } from "zustand";
 import type { ApprovalStatus, UserRole } from "@/lib/types";
 import { permissionLevel, type PermissionLevel } from "@/lib/permissions";

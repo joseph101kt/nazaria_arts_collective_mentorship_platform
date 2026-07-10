@@ -1,3 +1,4 @@
+// components/onboarding/profile-form.tsx
 import { ProfileForm } from "@/components/onboarding/profile-form";
 
 export default function OnboardingProfilePage() {
